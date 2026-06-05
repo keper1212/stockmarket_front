@@ -18,11 +18,13 @@ function toChartTime(value: string): UTCTimestamp {
   return Math.floor(new Date(value).getTime() / 1000) as UTCTimestamp
 }
 
-function toLineData(point: StockChartPoint): LineData<UTCTimestamp> {
-  return {
-    time: toChartTime(point.time),
-    value: point.price,
-  }
+function toLineDataPoints(points: StockChartPoint[]): LineData<UTCTimestamp>[] {
+  const pointsBySecond = new Map<UTCTimestamp, number>()
+  points.forEach((point) => {
+    pointsBySecond.set(toChartTime(point.time), point.price)
+  })
+
+  return Array.from(pointsBySecond, ([time, value]) => ({ time, value }))
 }
 
 export function StockChartPanel({ stockCode }: StockChartPanelProps) {
@@ -118,7 +120,7 @@ export function StockChartPanel({ stockCode }: StockChartPanelProps) {
     }
   }, [])
 
-  const lineData = useMemo(() => points.map(toLineData), [points])
+  const lineData = useMemo(() => toLineDataPoints(points), [points])
 
   useEffect(() => {
     if (!seriesRef.current) {
