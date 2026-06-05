@@ -789,13 +789,22 @@
   white-space: nowrap;
 }
 
-.stock-tabs span,
-.stock-tabs strong {
+.stock-tabs button {
   padding: 16px 0 14px;
 }
 
-.stock-tabs strong {
-  border-bottom: 4px solid #111a18;
+.stock-tabs button {
+  border: 0;
+  border-bottom: 4px solid transparent;
+  color: #8a8d88;
+  background: transparent;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.stock-tabs button.active {
+  border-bottom-color: #111a18;
   color: #111a18;
 }
 
@@ -876,7 +885,7 @@
 }
 
 .book-row.bid-row {
-  grid-template-columns: 1.1fr 0.8fr 0.9fr;
+  grid-template-columns: 0.9fr 1.1fr 0.8fr;
   background: #fff0f0;
 }
 
@@ -945,8 +954,7 @@
   font-size: 30px;
 }
 
-.current-price-row button,
-.market-info-pane button {
+.current-price-row button {
   border: 0;
   border-radius: 12px;
   padding: 10px 14px;
@@ -1547,4 +1555,71 @@
   .order-tabs {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.clickable-row:hover,
+.clickable-row:focus-visible {
+  background: rgba(13, 137, 111, 0.08);
+  outline: none;
+}
+
+.clickable-row:active {
+  transform: scale(0.998);
+}
+
+
+.chart-panel {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px clamp(18px, 4vw, 42px) 60px;
+}
+
+.chart-card {
+  position: relative;
+  border: 1px solid #ded7ca;
+  border-radius: 28px;
+  padding: 24px;
+  background: #fffdf8;
+  box-shadow: 0 18px 46px rgba(24, 31, 28, 0.08);
+}
+
+.chart-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.chart-heading h2 {
+  margin: 0;
+  font-size: clamp(24px, 4vw, 36px);
+  letter-spacing: -0.05em;
+}
+
+.chart-heading span {
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: #0d896f;
+  background: #e5fff5;
+  font-weight: 900;
+}
+
+.chart-container {
+  width: 100%;
+  min-height: 320px;
+}
+
+.chart-empty {
+  display: grid;
+  place-items: center;
+  min-height: 120px;
+  color: #7a847e;
+  font-weight: 900;
 }

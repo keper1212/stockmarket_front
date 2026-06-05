@@ -50,6 +50,21 @@ function canCancel(order: OrderHistoryOrder): boolean {
   return order.remainingQuantity > 0 && (order.status === 'ACCEPTED' || order.status === 'PARTIALLY_FILLED')
 }
 
+function isClosedWithoutTrade(order: OrderHistoryOrder): boolean {
+  return order.status === 'CANCELED' || order.status === 'REJECTED'
+}
+
+function closedOrderActionLabel(order: OrderHistoryOrder): string {
+  const side = order.orderType === 'BUY' ? '매수' : '매도'
+  if (order.status === 'CANCELED') {
+    return `${side}취소`
+  }
+  if (order.status === 'REJECTED') {
+    return `${side}거부`
+  }
+  return `${side}${statusLabel(order.status)}`
+}
+
 function createClientOrderId(orderType: OrderType): string {
   if (crypto.randomUUID) {
     return `${orderType.toLowerCase()}-${crypto.randomUUID()}`
@@ -103,10 +118,15 @@ function OrderHistoryPanel() {
   }
 
   const openOrders = useMemo(
-    () => history?.orders.filter((order) => order.remainingQuantity > 0 && order.status !== 'CANCELED') ?? [],
+    () => history?.orders.filter((order) => order.remainingQuantity > 0 && order.status !== 'CANCELED' && order.status !== 'REJECTED') ?? [],
+    [history],
+  )
+  const closedOrders = useMemo(
+    () => history?.orders.filter(isClosedWithoutTrade) ?? [],
     [history],
   )
   const completedTrades = history?.trades ?? []
+  const completedHistoryCount = completedTrades.length + closedOrders.length
 
   if (isLoading) {
     return <div className="order-history-empty">주문 내역을 불러오는 중입니다.</div>
@@ -158,14 +178,14 @@ function OrderHistoryPanel() {
       <article className="history-section">
         <div className="history-heading">
           <h3>체결 내역</h3>
-          <span>{completedTrades.length}건</span>
+          <span>{completedHistoryCount}건</span>
         </div>
-        {completedTrades.length === 0 ? (
-          <div className="order-history-empty">체결 내역이 없습니다.</div>
+        {completedHistoryCount === 0 ? (
+          <div className="order-history-empty">체결/취소 내역이 없습니다.</div>
         ) : (
           <div className="history-list">
             {completedTrades.map((trade: OrderHistoryTrade) => (
-              <div className="history-card compact" key={trade.tradeId}>
+              <div className="history-card compact" key={`trade-${trade.tradeId}`}>
                 <div>
                   <strong>{trade.stockName}</strong>
                   <span>{trade.stockCode} · {trade.orderType === 'BUY' ? '매수체결' : '매도체결'}</span>
@@ -179,6 +199,23 @@ function OrderHistoryPanel() {
                   <dd>{formatNumber(trade.tradeAmount)}원</dd>
                 </dl>
                 <time>{formatDateTime(trade.executedAt)}</time>
+              </div>
+            ))}
+            {closedOrders.map((order) => (
+              <div className="history-card compact closed" key={`order-${order.orderId}`}>
+                <div>
+                  <strong>{order.stockName}</strong>
+                  <span>{order.stockCode} · {closedOrderActionLabel(order)}</span>
+                </div>
+                <dl>
+                  <dt>주문가</dt>
+                  <dd>{formatNumber(order.price)}원</dd>
+                  <dt>주문수량</dt>
+                  <dd>{formatNumber(order.quantity)}주</dd>
+                  <dt>체결</dt>
+                  <dd>{formatNumber(order.executedQuantity)}주</dd>
+                </dl>
+                <time>{formatDateTime(order.acceptedAt)}</time>
               </div>
             ))}
           </div>
@@ -238,7 +275,7 @@ export function OrderPage({ stock, initialOrderType, initialPrice, onBackToOrder
         price: parsedPrice,
         quantity: parsedQuantity,
       })
-      setMessage(`${response.message} 주문번호: ${response.orderId}`)
+      setMessage(response.message)
     } catch (requestError) {
       setError(resolveApiError(requestError))
     } finally {

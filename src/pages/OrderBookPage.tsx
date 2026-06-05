@@ -1,9 +1,12 @@
 import { Client } from '@stomp/stompjs'
 import { useEffect, useMemo, useState } from 'react'
 import { resolveApiError } from '../api/client'
+import { StockChartPanel } from './StockChartPanel'
 import { getOrderBook } from '../api/marketApi'
 import type { OrderBookLevel, OrderBookResponse, StockSummary } from '../types/market'
 import type { OrderType } from '../types/order'
+
+type StockTab = 'ORDERBOOK' | 'CHART'
 
 type OrderBookPageProps = {
   stock: StockSummary
@@ -44,6 +47,7 @@ export function OrderBookPage({ stock, onBack, onOpenOrder }: OrderBookPageProps
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(false)
+  const [activeTab, setActiveTab] = useState<StockTab>('ORDERBOOK')
 
   useEffect(() => {
     let isMounted = true
@@ -128,12 +132,15 @@ export function OrderBookPage({ stock, onBack, onOpenOrder }: OrderBookPageProps
       </section>
 
       <nav className="stock-tabs" aria-label="종목 메뉴">
-        <strong>호가</strong>
-        <span>차트</span>
+        <button className={activeTab === 'ORDERBOOK' ? 'active' : ''} type="button" onClick={() => setActiveTab('ORDERBOOK')}>호가</button>
+        <button className={activeTab === 'CHART' ? 'active' : ''} type="button" onClick={() => setActiveTab('CHART')}>차트</button>
       </nav>
 
       {error && <p className="dashboard-alert">{error}</p>}
 
+      {activeTab === 'CHART' ? (
+        <StockChartPanel stockCode={stock.stockCode} />
+      ) : (
       <section className="orderbook-board">
         <aside className="execution-pane">
           <span>체결강도</span>
@@ -168,8 +175,8 @@ export function OrderBookPage({ stock, onBack, onOpenOrder }: OrderBookPageProps
 
               {bids.map((level) => (
                 <button className="book-row bid-row" key={`bid-${level.price}`} type="button" onClick={() => onOpenOrder('SELL', level.price)}>
-                  <strong>{formatNumber(level.price)}</strong>
                   <small>{(((level.price - currentPrice) / currentPrice) * 100).toFixed(2)}%</small>
+                  <strong>{formatNumber(level.price)}</strong>
                   <em>{formatNumber(level.quantity)}</em>
                   <span className="bar" style={{ width: `${Math.max(8, (level.quantity / maxQuantity) * 100)}%` }} />
                 </button>
@@ -190,9 +197,9 @@ export function OrderBookPage({ stock, onBack, onOpenOrder }: OrderBookPageProps
             <dt>거래량</dt>
             <dd>{formatNumber(stock.tradeVolume)}</dd>
           </dl>
-          <button type="button" onClick={() => onOpenOrder('BUY', currentPrice)}>10호가</button>
         </aside>
       </section>
+      )}
     </main>
   )
 }

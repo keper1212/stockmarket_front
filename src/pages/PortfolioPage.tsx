@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { resolveApiError } from '../api/client'
 import { getMyAssets } from '../api/portfolioApi'
+import type { StockSummary } from '../types/market'
 import type { HoldingStock, UserAssetsResponse } from '../types/portfolio'
 
 type PortfolioPageProps = {
   onBack: () => void
+  onOpenStock: (stock: StockSummary) => void
 }
 
 function formatNumber(value: number): string {
@@ -32,9 +34,35 @@ function signedNumber(value: number): string {
   return formatNumber(value)
 }
 
-function StockHoldingRow({ holding }: { holding: HoldingStock }) {
+function toStockSummary(holding: HoldingStock): StockSummary {
+  return {
+    stockCode: holding.stockCode,
+    stockName: holding.stockName,
+    currentPrice: holding.currentPrice,
+    changeDirection: 'EVEN',
+    changePrice: 0,
+    changeRate: 0,
+    tradeVolume: 0,
+    tradeAmount: 0,
+  }
+}
+
+function StockHoldingRow({ holding, onOpenStock }: { holding: HoldingStock; onOpenStock: (stock: StockSummary) => void }) {
+  const openStock = () => onOpenStock(toStockSummary(holding))
+
   return (
-    <tr>
+    <tr
+      className="clickable-row"
+      tabIndex={0}
+      onClick={openStock}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          openStock()
+        }
+      }}
+      aria-label={`${holding.stockName} 상세 페이지로 이동`}
+    >
       <td>
         <strong>{holding.stockName}</strong>
         <span>{holding.stockCode}</span>
@@ -50,7 +78,7 @@ function StockHoldingRow({ holding }: { holding: HoldingStock }) {
   )
 }
 
-export function PortfolioPage({ onBack }: PortfolioPageProps) {
+export function PortfolioPage({ onBack, onOpenStock }: PortfolioPageProps) {
   const [assets, setAssets] = useState<UserAssetsResponse | null>(null)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -100,7 +128,6 @@ export function PortfolioPage({ onBack }: PortfolioPageProps) {
           <p className="eyebrow">My Portfolio</p>
           <h1>주식 잔고/손익</h1>
         </div>
-        <button className="order-cta current" type="button">예수금</button>
       </header>
 
       {error && <p className="dashboard-alert">{error}</p>}
@@ -109,17 +136,6 @@ export function PortfolioPage({ onBack }: PortfolioPageProps) {
         <section className="portfolio-card empty-board">잔고 정보를 불러오는 중입니다.</section>
       ) : assets ? (
         <>
-          <section className="portfolio-controls">
-            <div className="account-select">종합매매 계좌</div>
-            <button type="button">예수금</button>
-            <button type="button">환전</button>
-          </section>
-
-          <nav className="portfolio-tabs" aria-label="잔고 메뉴">
-            <strong>잔고</strong>
-            <span>매매손익</span>
-          </nav>
-
           <section className="portfolio-summary">
             <article className="summary-total">
               <span>총자산</span>
@@ -179,7 +195,7 @@ export function PortfolioPage({ onBack }: PortfolioPageProps) {
                   </thead>
                   <tbody>
                     {assets.holdingStocks.map((holding) => (
-                      <StockHoldingRow key={holding.stockCode} holding={holding} />
+                      <StockHoldingRow key={holding.stockCode} holding={holding} onOpenStock={onOpenStock} />
                     ))}
                   </tbody>
                 </table>

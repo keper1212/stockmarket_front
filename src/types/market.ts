@@ -26,3 +26,24 @@ export type OrderBookResponse = {
   askOrders: OrderBookLevel[]
   bidOrders: OrderBookLevel[]
 }
+
+
+export type StockChartPoint = {
+  time: string
+  price: number
+  quantity: number
+}
+
+export type StockChartResponse = {
+  stockCode: string
+  points: StockChartPoint[]
+}
+
+export type TradeRealtimeMessage = {
+  stockCode: string
+  buyOrderId: string
+  sellOrderId: string
+  tradePrice: number
+  tradeQuantity: number
+  executedAt: string
+}

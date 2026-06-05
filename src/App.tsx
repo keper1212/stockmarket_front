@@ -172,7 +172,12 @@ function App() {
 
   if (accessToken) {
     if (appView === 'portfolio') {
-      return <PortfolioPage onBack={() => goBackInsideApp('dashboard')} />
+      return (
+        <PortfolioPage
+          onBack={() => goBackInsideApp('dashboard')}
+          onOpenStock={openOrderBook}
+        />
+      )
     }
 
     if (appView === 'orderbook' && selectedStock) {
